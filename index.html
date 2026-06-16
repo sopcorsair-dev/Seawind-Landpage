@@ -1,0 +1,1903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seawind - AI Maritime Experience</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* ==========================================================================
+           CSS VARIABLES & RESET
+           ========================================================================== */
+        :root {
+            --bg-base: #020813;
+            --cyan-300: #67e8f9;
+            --cyan-400: #22d3ee;
+            --cyan-500: #06b6d4;
+            --cyan-800: #155e75;
+            --blue-500: #3b82f6;
+            --text-white: #ffffff;
+            --text-gray-300: #d1d5db;
+            --text-gray-400: #9ca3af;
+            --border-light: rgba(255, 255, 255, 0.1);
+            --border-faint: rgba(255, 255, 255, 0.05);
+            --glass-bg: rgba(10, 25, 50, 0.4);
+            --transition-smooth: 600ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-white);
+            overflow-x: hidden;
+            min-height: 100vh;
+            position: relative;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            selection-background: rgba(6, 182, 212, 0.3);
+        }
+
+        ::selection {
+            background-color: rgba(6, 182, 212, 0.3);
+            color: white;
+        }
+
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* THÊM MỚI: Hiệu ứng quay cho biểu tượng loading */
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+
+        /* ==========================================================================
+           BACKGROUNDS & ANIMATIONS
+           ========================================================================== */
+        .bg-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .bg-sky {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.3;
+            mix-blend-mode: luminosity;
+        }
+
+        .bg-ocean {
+            opacity: 0.4;
+            mix-blend-mode: screen;
+            filter: saturate(0.8) contrast(1.2);
+            background-image: url('https://i.ibb.co/mVqyJnNy/Chat-GPT-Image-Jun-7-2026-08-33-23-PM.png');
+            background-size: 200% 100%;
+            animation: pan-ocean 40s linear infinite;
+        }
+
+        .grid-container {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            z-index: 0;
+            pointer-events: none;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            opacity: 0.7;
+        }
+
+        .tech-grid {
+            width: 300%;
+            height: 200%;
+            position: absolute;
+            bottom: -50%;
+            background-size: 50px 50px;
+            background-image: 
+                linear-gradient(to right, rgba(0, 212, 255, 0.05) 1px, transparent 1px), 
+                linear-gradient(to bottom, rgba(0, 212, 255, 0.05) 1px, transparent 1px);
+            transform: perspective(600px) rotateX(75deg) translateY(100px) translateZ(-200px);
+            transform-origin: center top;
+        }
+
+        @keyframes pan-ocean {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(6, 182, 212, 0.2); }
+            50% { box-shadow: 0 0 15px rgba(6, 182, 212, 0.6); }
+        }
+
+        @keyframes ai-reveal {
+            0% { opacity: 0; transform: translateY(40px) scale(0.95); filter: blur(12px); }
+            100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+        }
+
+        @keyframes text-flow {
+            0% { background-position: 0% center; }
+            100% { background-position: -300% center; }
+        }
+
+        @keyframes cyber-pulse {
+            0%, 100% { opacity: 1; text-shadow: 0 0 8px rgba(34, 211, 238, 0.6); }
+            50% { opacity: 0.6; text-shadow: 0 0 2px rgba(34, 211, 238, 0.2); }
+        }
+
+        /* ==========================================================================
+           LA BÀN HÀNG HẢI 3D 
+           ========================================================================== */
+        .compass-wrapper {
+            perspective: 800px;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: float-compass 4s ease-in-out infinite;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .compass-wrapper:hover .compass-3d {
+            filter: drop-shadow(0 0 15px rgba(34, 211, 238, 0.8));
+        }
+
+        .compass-3d {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transform: rotateX(60deg) rotateZ(0deg);
+            animation: spin-compass 12s linear infinite;
+        }
+
+        .compass-ring-outer {
+            position: absolute;
+            inset: -4px;
+            border: 2px dashed rgba(34, 211, 238, 0.4);
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(34, 211, 238, 0.3), inset 0 0 10px rgba(34, 211, 238, 0.2);
+            transform: translateZ(2px);
+        }
+
+        .compass-ring-inner {
+            position: absolute;
+            inset: 4px;
+            border: 1px solid rgba(59, 130, 246, 0.6);
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(10, 25, 50, 0.8) 0%, rgba(2, 8, 19, 0.9) 100%);
+            transform: translateZ(4px);
+        }
+
+        .compass-star {
+            position: absolute;
+            inset: 0;
+            transform: translateZ(8px);
+            transform-style: preserve-3d;
+        }
+
+        .needle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            transform-origin: center top;
+        }
+
+        .needle.north {
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-bottom: 22px solid var(--cyan-400);
+            transform: translate(-50%, -100%);
+            filter: drop-shadow(0 -3px 6px rgba(34, 211, 238, 0.8));
+        }
+
+        .needle.south {
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 22px solid rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, 0);
+        }
+
+        .needle.east {
+            border-top: 4px solid transparent;
+            border-bottom: 4px solid transparent;
+            border-left: 18px solid rgba(59, 130, 246, 0.7);
+            transform: translate(0, -50%);
+        }
+
+        .needle.west {
+            border-top: 4px solid transparent;
+            border-bottom: 4px solid transparent;
+            border-right: 18px solid rgba(59, 130, 246, 0.7);
+            transform: translate(-100%, -50%);
+        }
+
+        .compass-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 8px;
+            height: 8px;
+            background: var(--text-white);
+            border-radius: 50%;
+            transform: translate(-50%, -50%) translateZ(12px);
+            box-shadow: 0 0 10px white, 0 0 20px var(--cyan-400);
+        }
+
+        .compass-markers {
+            position: absolute;
+            inset: -14px;
+            transform: translateZ(6px);
+            color: var(--cyan-300);
+            font-size: 9px;
+            font-weight: 700;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .marker { position: absolute; text-shadow: 0 0 4px var(--cyan-500); }
+        .marker.n { top: 0; left: 50%; transform: translateX(-50%); color: var(--cyan-400); }
+        .marker.s { bottom: 0; left: 50%; transform: translateX(-50%) rotate(180deg); opacity: 0.6; }
+        .marker.e { top: 50%; right: 0; transform: translateY(-50%) rotate(90deg); opacity: 0.6; }
+        .marker.w { top: 50%; left: 0; transform: translateY(-50%) rotate(-90deg); opacity: 0.6; }
+
+        @keyframes spin-compass {
+            0% { transform: rotateX(60deg) rotateZ(0deg); }
+            100% { transform: rotateX(60deg) rotateZ(360deg); }
+        }
+
+        @keyframes float-compass {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+
+        /* --- TOOLTIP CHÚ THÍCH CHO LA BÀN --- */
+        .compass-hint {
+            position: absolute;
+            top: calc(100% + 12px);
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            pointer-events: none;
+            z-index: 50;
+            animation: hint-bounce-y 2s infinite ease-in-out;
+        }
+        @media (min-width: 1024px) {
+            .compass-hint {
+                top: 50%;
+                right: calc(100% + 15px);
+                left: auto;
+                transform: translateY(-50%);
+                flex-direction: row-reverse;
+                animation: compass-hint-bounce-x 2s infinite ease-in-out;
+            }
+            .compass-hint .globe-hint-arrow {
+                transform: rotate(90deg);
+                margin-left: -2px;
+            }
+            @keyframes compass-hint-bounce-x {
+                0%, 100% { transform: translateY(-50%) translateX(0); }
+                50% { transform: translateY(-50%) translateX(6px); }
+            }
+        }
+
+        /* ==========================================================================
+           QUẢ ĐỊA CẦU 3D (BÊN PHẢI LOGO) & MŨI TÊN CHÚ THÍCH
+           ========================================================================== */
+        .globe-container {
+            position: relative;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: float-globe 4.2s ease-in-out infinite; 
+        }
+
+        .globe-orbit {
+            position: absolute;
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            border: 1px dashed rgba(59, 130, 246, 0.4);
+            transform: rotateX(70deg) rotateY(-15deg);
+            animation: spin-orbit 10s linear infinite;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
+        }
+
+        .globe-sphere {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            background: radial-gradient(circle at 35% 35%, rgba(10, 25, 50, 0.8) 0%, rgba(2, 8, 19, 1) 100%);
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.4), inset 0 0 8px rgba(6, 182, 212, 0.6);
+        }
+
+        .globe-map {
+            position: absolute;
+            top: 0; left: 0;
+            width: 200%;
+            height: 100%;
+            background-color: var(--cyan-400);
+            -webkit-mask-image: url('https://upload.wikimedia.org/wikipedia/commons/8/80/World_map_-_low_resolution.svg');
+            mask-image: url('https://upload.wikimedia.org/wikipedia/commons/8/80/World_map_-_low_resolution.svg');
+            -webkit-mask-size: 50% 100%;
+            mask-size: 50% 100%;
+            -webkit-mask-repeat: repeat-x;
+            mask-repeat: repeat-x;
+            opacity: 0.85;
+            animation: spin-globe 15s linear infinite;
+        }
+
+        .globe-sphere::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            box-shadow: inset -8px -8px 12px rgba(2, 8, 19, 0.9), 
+                        inset 3px 3px 8px rgba(103, 232, 249, 0.4);
+            pointer-events: none;
+        }
+
+        @keyframes spin-globe {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        @keyframes spin-orbit {
+            0% { transform: rotateX(70deg) rotateY(-15deg) rotateZ(0deg); }
+            100% { transform: rotateX(70deg) rotateY(-15deg) rotateZ(360deg); }
+        }
+
+        @keyframes float-globe {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+
+        .globe-hint {
+            position: absolute;
+            top: calc(100% + 12px);
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            pointer-events: none;
+            z-index: 50;
+            animation: hint-bounce-y 2s infinite ease-in-out;
+        }
+
+        .globe-hint-arrow {
+            color: var(--cyan-400);
+            width: 16px;
+            height: 16px;
+            filter: drop-shadow(0 0 5px var(--cyan-400));
+        }
+
+        .globe-hint-box {
+            background: rgba(2, 8, 19, 0.85);
+            border: 1px solid var(--cyan-500);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            color: var(--cyan-300);
+            text-transform: uppercase;
+            white-space: nowrap;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.3), inset 0 0 5px rgba(6, 182, 212, 0.2);
+        }
+
+        @keyframes hint-bounce-y {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-6px); }
+        }
+
+        @media (min-width: 1024px) {
+            .globe-hint {
+                top: 50%;
+                left: calc(100% + 15px);
+                transform: translateY(-50%);
+                flex-direction: row;
+                animation: hint-bounce-x 2s infinite ease-in-out;
+            }
+            .globe-hint-arrow {
+                transform: rotate(-90deg);
+                margin-right: -2px; 
+            }
+            @keyframes hint-bounce-x {
+                0%, 100% { transform: translateY(-50%) translateX(0); }
+                50% { transform: translateY(-50%) translateX(-6px); }
+            }
+        }
+
+        /* ==========================================================================
+           MÔ HÌNH THUYỀN 2D (DI CHUYỂN TRÊN PORTAL CARD)
+           ========================================================================== */
+        .global-ship-wrapper {
+            position: absolute;
+            top: 0; left: 0; width: 0; height: 0;
+            z-index: 50; pointer-events: none;
+            transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .boat-2d-container {
+            position: absolute;
+            left: -40px; top: -100px;
+            width: 80px; height: 90px;
+            opacity: 1;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            filter: drop-shadow(0 5px 15px rgba(6, 182, 212, 0.6));
+        }
+
+        .boat-bobbing {
+            width: 100%; height: 100%;
+            animation: boat-bob 2.5s ease-in-out infinite;
+            position: relative;
+        }
+
+        @keyframes boat-bob {
+            0%, 100% { transform: translateY(0) rotate(-1deg); }
+            50% { transform: translateY(4px) rotate(2deg); }
+        }
+
+        .b-hull {
+            position: absolute; bottom: 22px; left: 10px; width: 100px; height: 18px;
+            background: var(--text-white); border-radius: 2px 2px 12px 6px; 
+            clip-path: polygon(0 15%, 100% 0, 98% 85%, 65% 100%, 20% 95%, 0 50%);
+            box-shadow: inset -5px -2px 10px rgba(6, 182, 212, 0.4); z-index: 3;
+        }
+        .b-windows {
+            position: absolute; top: 5px; left: 20px; width: 65px; height: 5px;
+            background: #020813; transform: skewX(-35deg); z-index: 4;
+            background-image: linear-gradient(to right, transparent 15%, var(--text-white) 15%, var(--text-white) 17%, transparent 17%, transparent 85%, var(--text-white) 85%, var(--text-white) 87%, transparent 87%);
+        }
+        .b-rudder {
+            position: absolute; bottom: 4px; left: 20px; width: 8px; height: 22px;
+            background: var(--cyan-400); clip-path: polygon(0 0, 100% 0, 80% 100%, 20% 100%);
+            transform: skewX(-5deg); z-index: 1;
+        }
+        .b-saildrive {
+            position: absolute; bottom: 8px; left: 35px; width: 4px; height: 16px;
+            background: var(--text-gray-400); z-index: 1;
+        }
+        .b-saildrive::after {
+            content: ''; position: absolute; bottom: 1px; left: -4px;
+            width: 12px; height: 4px; background: var(--cyan-500); border-radius: 2px;
+        }
+        .b-keel {
+            position: absolute; bottom: 4px; left: 52px; width: 22px; height: 20px;
+            background: var(--cyan-300); clip-path: polygon(0 0, 100% 0, 80% 100%, 15% 100%); z-index: 2;
+        }
+        .b-bimini {
+            position: absolute; bottom: 54px; left: 10px; width: 60px; height: 2px;
+            background: var(--text-white); box-shadow: 0 2px 4px rgba(0,0,0,0.3); z-index: 2;
+        }
+        .b-bimini::before, .b-bimini::after {
+            content: ''; position: absolute; top: 2px; width: 1.5px; height: 12px;
+            background: var(--text-gray-400); transform: skewX(20deg);
+        }
+        .b-bimini::before { left: 8px; } .b-bimini::after { left: 30px; }
+        .b-cabin {
+            position: absolute; bottom: 40px; left: 35px; width: 30px; height: 14px;
+            background: var(--text-white); border-radius: 2px 6px 0 0; z-index: 2;
+        }
+        .b-cabin::after {
+            content: ''; position: absolute; right: -5px; top: 0; width: 6px; height: 100%;
+            background: rgba(10, 25, 50, 0.9); transform: skewX(30deg); transform-origin: bottom left;
+        }
+        .b-mast {
+            position: absolute; bottom: 40px; left: 65px; width: 2.5px; height: 110px;
+            background: var(--text-white); box-shadow: 0 0 5px var(--cyan-300); z-index: 1;
+        }
+        .b-mainsail {
+            position: absolute; bottom: 44px; right: 55px; width: 42px; height: 102px;
+            background: var(--text-white); clip-path: polygon(30% 0, 100% 0, 100% 100%, 0 100%, 10% 50%); 
+            box-shadow: inset 5px 0 10px rgba(6, 182, 212, 0.2); z-index: 2;
+        }
+        .b-mainsail::before {
+            content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 10px; background: #111827;
+        }
+        .b-jib {
+            position: absolute; bottom: 44px; left: 67.5px; width: 40px; height: 100px;
+            background: rgba(255, 255, 255, 0.9); clip-path: polygon(0 0, 100% 92%, 85% 100%, 0 100%); 
+            box-shadow: inset -3px 0 5px rgba(6, 182, 212, 0.15); z-index: 2;
+        }
+        .b-wake {
+            position: absolute; bottom: 18px; left: -10px; width: 40px; height: 2px;
+            background: rgba(6, 182, 212, 0.8); border-radius: 2px; animation: wake-move 1.5s linear infinite;
+        }
+        .b-wake::before {
+            content: ''; position: absolute; bottom: -3px; left: 8px; width: 25px; height: 2px;
+            background: rgba(6, 182, 212, 0.5); border-radius: 2px; animation: wake-move 1.5s linear infinite 0.3s;
+        }
+        @keyframes wake-move {
+            0% { transform: translateX(0) scaleX(1); opacity: 1; }
+            100% { transform: translateX(-30px) scaleX(1.5); opacity: 0; }
+        }
+
+        /* ==========================================================================
+           LAYOUT & CORE COMPONENTS
+           ========================================================================== */
+        .layout-container {
+            position: relative;
+            z-index: 10;
+            max-width: 1536px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        @media (min-width: 1024px) {
+            .layout-container { padding: 2rem 3rem; }
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.25rem;
+            padding: 0.6rem 1.4rem;
+            background: rgba(10, 25, 50, 0.45);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 1rem;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4), 
+                        0 0 15px rgba(59, 130, 246, 0.2);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .logo-container:hover {
+            border-color: rgba(59, 130, 246, 0.7);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6), 
+                        0 0 25px rgba(59, 130, 246, 0.55);
+            transform: translateY(-2px);
+        }
+
+        .logo {
+            width: 12rem; 
+            height: auto;  
+            max-height: 4.5rem; 
+            object-fit: contain;
+            opacity: 0.95;
+            transition: all 0.5s ease;
+            filter: invert(1) sepia(1) saturate(8) hue-rotate(190deg) brightness(1.1) contrast(1.1);
+            mix-blend-mode: screen;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .header-right { flex-direction: column; align-items: flex-end; gap: 1rem; }
+        }
+
+        .user-info {
+            display: flex; flex-direction: column; align-items: flex-end; gap: 0.25rem;
+            font-size: 0.75rem; color: var(--text-gray-400); padding-right: 1.5rem; border-right: 1px solid var(--border-light);
+        }
+
+        @media (max-width: 768px) { .user-info { padding-right: 0; border-right: none; } }
+
+        .user-info-row { display: flex; align-items: center; gap: 0.375rem; }
+
+        .dept-badge {
+            background: rgba(255, 255, 255, 0.05); padding: 0.125rem 0.375rem;
+            border-radius: 0.25rem; border: 1px solid var(--border-faint); color: var(--text-gray-300);
+        }
+
+        .email-link { color: var(--text-gray-400); text-decoration: none; transition: all 0.3s ease; cursor: pointer; }
+        .email-link:hover { color: var(--cyan-400); text-decoration: underline; text-underline-offset: 4px; }
+
+        /* THÊM LỚP MÀU NÚT CHO NÚT FEEDBACK THEO CHUẨN TAILWIND */
+        .bg-gradient-to-r { background-image: linear-gradient(to right, var(--tw-gradient-stops)); }
+        .from-cyan-500 { --tw-gradient-from: #06b6d4; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(6, 182, 212, 0)); }
+        .to-blue-500 { --tw-gradient-to: #3b82f6; }
+        .hover\:from-cyan-400:hover { --tw-gradient-from: #22d3ee; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(34, 211, 238, 0)); }
+        .hover\:to-blue-400:hover { --tw-gradient-to: #60a5fa; }
+        .border-cyan-300 { border-color: #67e8f9; }
+        .text-\[10px\] { font-size: 10px; }
+
+        .author-highlight {
+            background: linear-gradient(110deg, var(--text-gray-400) 0%, var(--text-gray-400) 40%, var(--cyan-400) 48%, var(--text-white) 50%, var(--cyan-400) 52%, var(--text-gray-400) 60%, var(--text-gray-400) 100%);
+            background-size: 200% auto; color: transparent; -webkit-background-clip: text; background-clip: text;
+            animation: shine-sweep 3s linear infinite; font-weight: 600; letter-spacing: 0.02em;
+        }
+
+        @keyframes shine-sweep { 0% { background-position: 200% center; } 100% { background-position: -200% center; } }
+
+        .btn-about {
+            display: none; align-items: center; gap: 0.5rem; padding: 0.375rem 1rem; border-radius: 9999px;
+            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(6, 182, 212, 0.3);
+            color: var(--cyan-400); font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.05em; text-decoration: none; transition: all 0.3s ease; box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
+        }
+        @media (min-width: 768px) { .btn-about { display: flex; } }
+        .btn-about:hover { color: var(--text-white); border-color: var(--cyan-400); }
+
+        .lang-switch {
+            display: flex; align-items: center; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-light);
+            border-radius: 9999px; padding: 0.25rem; backdrop-filter: blur(12px); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .lang-btn {
+            background: transparent; border: none; color: var(--text-gray-400); padding: 0.375rem 1rem;
+            border-radius: 9999px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em; cursor: pointer; transition: all 0.3s ease;
+        }
+        .lang-btn.active { background-color: var(--cyan-500); color: var(--text-white); }
+        .lang-btn:not(.active):hover { color: var(--text-white); }
+
+        /* ==========================================================================
+           MIDDLE CONTENT WRAPPER
+           ========================================================================== */
+        .middle-content-wrapper {
+            flex-grow: 1; display: flex; flex-direction: column; justify-content: center;
+            gap: 3rem; padding: 2rem 0; width: 100%;
+        }
+
+        .hero-section {
+            display: flex; flex-direction: column; align-items: center; text-align: center;
+            width: 100%; position: relative; z-index: 10;
+            animation: ai-reveal 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .subtitle-wrapper { display: flex; align-items: center; justify-content: center; gap: 1rem; margin-bottom: 1rem; }
+        .subtitle-line { height: 1px; width: 3rem; background: linear-gradient(to right, transparent, var(--cyan-500), transparent); }
+        .subtitle { color: var(--cyan-400); text-transform: uppercase; letter-spacing: 0.2em; font-size: 0.875rem; font-weight: 500; animation: cyber-pulse 2.5s infinite; }
+
+        .title { font-size: 1.85rem; font-weight: 600; line-height: 1.25; margin-bottom: 1rem; letter-spacing: -0.025em; max-width: 100%; }
+        @media (min-width: 640px) { .title { font-size: 2.25rem; } }
+        @media (min-width: 1024px) { .title { font-size: 3.5rem; max-width: 80rem; } .title span { white-space: nowrap; display: inline-block; } }
+
+        .title-gradient {
+            background: linear-gradient(to right, var(--cyan-400), var(--blue-500), var(--cyan-300), var(--cyan-400));
+            background-size: 300% auto; -webkit-background-clip: text; color: transparent;
+            filter: drop-shadow(0 0 15px rgba(0, 212, 255, 0.4)); animation: text-flow 5s linear infinite; 
+        }
+
+        .desc { color: var(--text-gray-300); font-size: 1rem; max-width: 48rem; margin: 0 auto; font-weight: 300; line-height: 1.625; opacity: 0.8; }
+        @media (min-width: 1024px) { .desc { font-size: 1.125rem; } }
+
+        /* ==========================================================================
+           PORTAL CARDS 
+           ========================================================================== */
+        .portals-section {
+            position: relative; z-index: 20; opacity: 0;
+            animation: ai-reveal 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
+        }
+
+        .section-header { display: flex; align-items: center; justify-content: center; gap: 0.75rem; margin-bottom: 2rem; }
+        .dot-indicator { width: 0.5rem; height: 0.5rem; border-radius: 9999px; background-color: var(--cyan-400); box-shadow: 0 0 8px rgba(0, 212, 255, 0.8); animation: cyber-pulse 2s infinite; }
+        .section-title { color: var(--text-gray-400); text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.875rem; font-weight: 500; }
+
+        .cards-container { position: relative; display: flex; flex-direction: column; width: 100%; height: 550px; gap: 0.5rem; }
+        @media (min-width: 1024px) { .cards-container { flex-direction: row; height: 380px; gap: 1rem; } }
+
+        .portal-card {
+            background: var(--glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--border-light);
+            position: relative; border-radius: 1rem; transition: all var(--transition-smooth);
+            cursor: pointer; overflow: hidden; flex: 1; will-change: flex, transform; --x: 50%; --y: 50%;
+        }
+
+        .card-bg-image {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            opacity: 0; 
+            transition: opacity 0.8s ease;
+            z-index: 0; 
+            pointer-events: none;
+            filter: grayscale(80%) brightness(0.6) contrast(1.2); 
+            mix-blend-mode: luminosity;
+        }
+        
+        .portal-card.active .card-bg-image { opacity: 0.15; }
+        .portal-card:hover { border-color: rgba(6, 182, 212, 0.5); }
+        .portal-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at var(--x) var(--y), rgba(6, 182, 212, 0.15) 0%, transparent 70%); opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 0; }
+        .portal-card:hover::before { opacity: 1; }
+        .portal-card.active { flex: 4; }
+        @media (min-width: 1024px) { .portal-card.active { flex: 3; } .portal-card:hover:not(.active) { flex: 1.2; } }
+
+        .card-bg-overlay { position: absolute; inset: 0; background-color: rgba(6, 182, 212, 0.1); opacity: 0; transition: opacity 0.5s ease; z-index: 1; }
+        .portal-card.active .card-bg-overlay { opacity: 1; }
+
+        .card-inactive-content { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 1rem; transition: all 0.5s ease; opacity: 1; transform: scale(1); z-index: 2; }
+        @media (min-width: 1024px) { .card-inactive-content { flex-direction: column; justify-content: flex-start; padding-top: 2rem; } }
+        .portal-card.active .card-inactive-content { opacity: 0; transform: scale(0.9); pointer-events: none; }
+
+        .icon-circle { border-radius: 9999px; border: 1px solid var(--border-light); display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.05); transition: border-color 0.3s, background-color 0.3s; flex-shrink: 0; }
+        .portal-card:hover .icon-circle { border-color: rgba(6, 182, 212, 0.5); }
+        .icon-circle.sm { width: 2.5rem; height: 2.5rem; }
+        @media (min-width: 1024px) { .icon-circle.sm { width: 3rem; height: 3rem; margin-bottom: 1rem; } }
+        .icon-inactive { color: var(--text-gray-400); width: 1.25rem; height: 1.25rem; transition: color 0.3s; }
+        .portal-card:hover .icon-inactive { color: var(--cyan-300); }
+
+        .title-mobile { margin-left: 1rem; font-weight: 600; color: var(--text-gray-300); text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+        @media (min-width: 1024px) { .title-mobile { display: none; } }
+        .title-desktop { display: none; white-space: nowrap; letter-spacing: 0.2em; font-size: 0.75rem; font-weight: 600; color: var(--text-gray-400); margin-top: 1.5rem; text-transform: uppercase; writing-mode: vertical-rl; transform: rotate(180deg); }
+        @media (min-width: 1024px) { .title-desktop { display: block; } }
+
+        .card-active-content { position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 1.5rem; display: flex; flex-direction: column; transition: all 0.5s ease; opacity: 0; transform: translateX(-2rem); pointer-events: none; z-index: 3; }
+        @media (min-width: 1024px) { .card-active-content { width: 320px; padding: 2rem; } }
+        .portal-card.active .card-active-content { opacity: 1; transform: translateX(0); pointer-events: auto; }
+
+        .icon-circle.lg { width: 3rem; height: 3rem; border-color: var(--cyan-400); box-shadow: 0 0 15px rgba(0, 212, 255, 0.3); background-color: rgba(6, 182, 212, 0.1); margin-bottom: 1rem; }
+        @media (min-width: 1024px) { .icon-circle.lg { width: 3.5rem; height: 3.5rem; margin-bottom: 1.5rem; } }
+        .icon-active { color: var(--cyan-400); width: 1.25rem; height: 1.25rem; }
+        @media (min-width: 1024px) { .icon-active { width: 1.5rem; height: 1.5rem; } }
+
+        .content-bottom { margin-top: auto; position: relative; z-index: 5;}
+        .content-bottom h4 { font-size: 1.125rem; font-weight: 700; margin-bottom: 0.5rem; white-space: pre-line; color: var(--text-white); }
+        @media (min-width: 1024px) { .content-bottom h4 { font-size: 1.25rem; margin-bottom: 0.75rem; } }
+        .content-bottom p { font-size: 0.75rem; color: var(--text-gray-300); font-weight: 300; line-height: 1.6; margin-bottom: 1rem; opacity: 0.8; }
+        @media (min-width: 1024px) { .content-bottom p { font-size: 0.875rem; margin-bottom: 1.5rem; } }
+
+        .portal-link { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; font-weight: 500; color: var(--cyan-400); text-decoration: none; transition: color 0.3s; cursor: pointer; z-index: 10; position: relative; }
+        .portal-link:hover { color: var(--cyan-300); }
+        .portal-link svg { width: 1rem; height: 1rem; transition: transform 0.3s; }
+        .portal-card:hover .portal-link svg { transform: translateX(4px); }
+
+        /* ==========================================================================
+           FOOTER & SOCIAL DROPDOWN MENU
+           ========================================================================== */
+        footer {
+            padding-top: 1.5rem; border-top: 1px solid var(--border-faint); display: flex;
+            flex-direction: column; justify-content: space-between; align-items: flex-start; gap: 1.5rem;
+            position: relative; z-index: 20;
+        }
+        @media (min-width: 1024px) { footer { flex-direction: row; align-items: center; } }
+        .quote-container { display: flex; gap: 1rem; align-items: flex-start; max-width: 24rem; }
+        .quote-mark { font-size: 2.25rem; color: var(--cyan-800); font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif; line-height: 1; opacity: 0.5; }
+        .quote-text { color: var(--text-gray-400); font-size: 0.875rem; line-height: 1.6; margin-top: 0.25rem; }
+        .quote-highlight { color: rgba(6, 182, 212, 0.8); }
+
+        .footer-features { display: flex; flex-wrap: wrap; gap: 1.5rem; }
+        @media (min-width: 1024px) { .footer-features { flex-wrap: nowrap; gap: 2.5rem; } }
+
+        .feature-item { display: flex; align-items: center; gap: 0.75rem; cursor: default; position: relative; }
+        .feature-icon-wrapper { width: 3rem; height: 3rem; border-radius: 9999px; border: 1px solid var(--border-light); background: rgba(255, 255, 255, 0.05); display: flex; align-items: center; justify-content: center; transition: all 0.5s ease; }
+        .feature-icon { width: 1.25rem; height: 1.25rem; color: var(--cyan-500); transition: transform 0.5s ease; }
+        .feature-item:hover .feature-icon-wrapper { border-color: rgba(6, 182, 212, 0.5); background: rgba(6, 182, 212, 0.1); animation: pulse-glow 3s infinite ease-in-out; transform: scale(1.1); }
+        .feature-item:hover .feature-icon { transform: rotate(12deg) scale(1.1); }
+        .feature-text { font-size: 0.75rem; color: var(--text-gray-400); white-space: pre-line; line-height: 1.2; transition: color 0.3s ease; }
+        .feature-item:hover .feature-text { color: var(--text-white); }
+
+        .social-dropdown {
+            position: absolute;
+            bottom: calc(100% + 15px);
+            left: 50%;
+            transform: translateX(-50%) translateY(15px);
+            background: rgba(2, 8, 19, 0.95);
+            border: 1px solid var(--cyan-800);
+            border-radius: 0.75rem;
+            padding: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5), 0 0 15px rgba(6, 182, 212, 0.2);
+            z-index: 100;
+            backdrop-filter: blur(8px);
+        }
+
+        .social-dropdown.show,
+        #btn-community:hover .social-dropdown {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .social-dropdown::before {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            height: 25px;
+            background: transparent;
+        }
+
+        .social-dropdown::after {
+            content: ''; position: absolute; top: 100%; left: 50%;
+            transform: translateX(-50%);
+            border-width: 6px; border-style: solid;
+            border-color: var(--cyan-800) transparent transparent transparent;
+        }
+        .social-link {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.5rem 1rem; color: var(--text-gray-300); text-decoration: none;
+            font-size: 0.75rem; font-weight: 500; border-radius: 0.5rem;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        .social-link:hover { background: rgba(6, 182, 212, 0.15); color: var(--cyan-400); }
+        .social-link svg { width: 16px; height: 16px; }
+
+        /* ==========================================================================
+           MODAL & TOAST NOTIFICATION
+           ========================================================================== */
+        .custom-modal-overlay { position: fixed; inset: 0; background: rgba(2, 8, 19, 0.8); backdrop-filter: blur(10px); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .custom-modal-overlay.show { opacity: 1; pointer-events: auto; }
+        .custom-modal-box { background: var(--bg-base); border: 1px solid rgba(6, 182, 212, 0.5); box-shadow: 0 0 40px rgba(6, 182, 212, 0.2); border-radius: 1.5rem; padding: 2.5rem; max-width: 400px; width: 90%; text-align: center; transform: translateY(20px) scale(0.95); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; }
+        .custom-modal-overlay.show .custom-modal-box { transform: translateY(0) scale(1); }
+        .custom-modal-box::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(to right, var(--cyan-500), var(--blue-500)); }
+        .modal-icon-wrapper { width: 4rem; height: 4rem; border-radius: 9999px; background: rgba(6, 182, 212, 0.1); border: 1px solid var(--cyan-500); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; color: var(--cyan-400); box-shadow: 0 0 20px rgba(6, 182, 212, 0.4); }
+        .modal-title { color: var(--text-white); font-size: 1.25rem; font-weight: 700; margin-bottom: 0.75rem; letter-spacing: 0.025em; }
+        .modal-desc { color: var(--text-gray-400); font-size: 0.875rem; line-height: 1.5; margin-bottom: 2rem; }
+        .modal-actions { display: flex; gap: 1rem; justify-content: center; }
+        .btn-primary, .btn-secondary { padding: 0.75rem 1.5rem; border-radius: 9999px; font-weight: 600; font-size: 0.875rem; cursor: pointer; transition: all 0.3s ease; border: none; flex: 1; }
+        .btn-primary { background: var(--cyan-500); color: white; }
+        .btn-primary:hover { background: var(--cyan-400); box-shadow: 0 0 15px rgba(6, 182, 212, 0.6); transform: translateY(-2px); }
+        .btn-secondary { background: transparent; color: var(--text-gray-300); border: 1px solid var(--border-light); }
+        .btn-secondary:hover { color: white; border-color: var(--text-gray-400); background: rgba(255, 255, 255, 0.05); }
+
+        .toast-msg { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--cyan-800); color: white; padding: 0.75rem 1.5rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 500; opacity: 0; transition: all 0.4s ease; z-index: 1000; box-shadow: 0 5px 15px rgba(0,0,0,0.5); border: 1px solid var(--cyan-500); display: flex; align-items: center; gap: 0.5rem; }
+        .toast-msg.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+        /* ==========================================================================
+           MAP MODAL STYLES
+           ========================================================================== */
+        .globe-container { cursor: pointer; transition: transform 0.3s ease; }
+        .globe-container:hover { transform: scale(1.1); }
+        .globe-container:hover .globe-sphere { box-shadow: 0 0 20px rgba(6, 182, 212, 0.8), inset 0 0 15px rgba(6, 182, 212, 0.8); }
+
+        #map-modal .custom-modal-box {
+            max-width: 800px;
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            background: rgba(2, 8, 19, 0.95);
+        }
+
+        .close-map-btn {
+            position: absolute;
+            top: 1.2rem;
+            right: 1.2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border-light);
+            color: white;
+            border-radius: 50%;
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.3s ease;
+        }
+
+        .close-map-btn:hover { background: var(--cyan-500); transform: rotate(90deg); }
+        .leaflet-popup-content-wrapper { background: rgba(10, 25, 50, 0.9); color: white; border: 1px solid var(--cyan-500); }
+        .leaflet-popup-tip { background: rgba(10, 25, 50, 0.9); }
+        .leaflet-control-attribution { display: none !important; }
+
+        .location-switch {
+            display: flex; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--cyan-800); border-radius: 9999px; padding: 4px;
+        }
+        .loc-btn {
+            background: transparent; border: none; color: var(--text-gray-400); padding: 6px 14px;
+            border-radius: 9999px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease;
+        }
+        .loc-btn.active { background-color: var(--cyan-500); color: var(--text-white); box-shadow: 0 0 10px rgba(6, 182, 212, 0.4); }
+        .loc-btn:not(.active):hover { color: var(--cyan-300); }
+
+        /* --------------------------------------------------------------------------
+           HIỆU ỨNG MÁY BAY CHUYỂN CẢNH TRÊN BẢN ĐỒ
+           -------------------------------------------------------------------------- */
+        path.aviation-route {
+            animation: route-dash 1s linear infinite;
+            filter: drop-shadow(0 0 5px rgba(34, 211, 238, 0.8));
+        }
+        @keyframes route-dash { to { stroke-dashoffset: -20; } }
+        
+        #tracking-plane {
+            display: none; position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); 
+            z-index: 1000; pointer-events: none; transition: opacity 0.5s ease;
+        }
+        
+        /* Chỉnh lại tâm của máy bay bản đồ để nó quay quanh chính nó mượt mà */
+        .plane-2d-container {
+            position: relative;
+            transform-origin: center;
+            filter: drop-shadow(0 10px 15px rgba(2, 8, 19, 0.9)) drop-shadow(0 0 20px rgba(6, 182, 212, 0.6)); 
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .plane-bobbing {
+            display: flex; align-items: center; justify-content: center;
+            animation: plane-bob 3s ease-in-out infinite; position: relative;
+        }
+
+        @keyframes plane-bob {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+
+        .vehicle-icon {
+            color: var(--cyan-400); width: 36px; height: 36px;
+            /* Mặc định icon Lucide là chéo góc 45 độ, ta bẻ lại 45 độ cho nó nằm NGANG chuẩn xác hướng MŨI SANG PHẢI */
+            transform: rotate(45deg); 
+            filter: drop-shadow(0 0 8px rgba(34, 211, 238, 0.8)); z-index: 2;
+        }
+
+        .vehicle-trail {
+            position: absolute; top: 50%; left: -15px; /* Để vệt nằm bên tay trái máy bay */
+            width: 30px; height: 2px; background: rgba(6, 182, 212, 0.8);
+            border-radius: 2px; animation: trail-move 1s linear infinite; z-index: 1;
+        }
+        .vehicle-trail::after {
+            content: ''; position: absolute; top: 6px; left: 5px; width: 20px; height: 2px;
+            background: rgba(6, 182, 212, 0.5); border-radius: 2px; animation: trail-move 1.2s linear infinite 0.2s;
+        }
+        @keyframes trail-move {
+            0% { transform: translateX(0) scaleX(1); opacity: 1; }
+            100% { transform: translateX(-30px) scaleX(1.5); opacity: 0; }
+        }
+
+    </style>
+<!-- Leaflet Map CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+
+    <div class="bg-layer">
+        <img src="https://images.unsplash.com/photo-1500534623283-312aade485b7?q=80&w=2000&auto=format&fit=crop" alt="Dramatic Sky" class="bg-sky" />
+    </div>
+    <div class="bg-layer bg-ocean"></div>
+    <div class="grid-container">
+        <div class="tech-grid"></div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="layout-container">
+        
+        <!-- Header -->
+        <header>
+            <div class="logo-container">
+                <!-- LA BÀN HÀNG HẢI 3D (TRÁI) -->
+                <div class="compass-wrapper" onclick="openDealerModal()" title="Tìm Đại lý">
+                    <div class="compass-3d">
+                        <div class="compass-ring-outer"></div>
+                        <div class="compass-ring-inner"></div>
+                        <div class="compass-star">
+                            <div class="needle north"></div>
+                            <div class="needle south"></div>
+                            <div class="needle east"></div>
+                            <div class="needle west"></div>
+                        </div>
+                        <div class="compass-center"></div>
+                        <div class="compass-markers">
+                            <span class="marker n">N</span>
+                            <span class="marker s">S</span>
+                            <span class="marker e">E</span>
+                            <span class="marker w">W</span>
+                        </div>
+                    </div>
+                    <!-- CHÚ THÍCH CLICK (HINT) -->
+                    <div class="compass-hint">
+                        <i data-lucide="arrow-up" class="globe-hint-arrow"></i>
+                        <div class="globe-hint-box" id="text-compass-hint">Tìm Đại Lý</div>
+                    </div>
+                </div>
+
+                <img src="https://i.ibb.co/yFpjsvMQ/logo-seawind.jpg" alt="Seawind Logo" class="logo" />
+
+                <!-- QUẢ ĐỊA CẦU 3D (PHẢI) -->
+                <div class="globe-container" onclick="openMapModal()" title="Xem vị trí nhà máy">
+                    <div class="globe-orbit"></div>
+                    <div class="globe-sphere">
+                        <div class="globe-map"></div>
+                    </div>
+                    <!-- CHÚ THÍCH CLICK (HINT) -->
+                    <div class="globe-hint">
+                        <i data-lucide="arrow-up" class="globe-hint-arrow"></i>
+                        <div class="globe-hint-box" id="text-globe-hint">Xem Vị Trí</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="header-right">
+                <a href="https://seawindcats.com/about-us/" target="_blank" rel="noopener noreferrer" class="btn-about">
+                    <i data-lucide="info" style="width: 14px; height: 14px;"></i>
+                    <span id="text-about">About Seawind</span>
+                </a>
+
+                <div class="user-info">
+                    <div class="user-info-row">
+                        <i data-lucide="user" style="width: 12px; height: 12px; color: var(--cyan-400);"></i> 
+                        <span id="text-author" class="author-highlight">Author: Le Thai Phuc</span>
+                        <span style="opacity: 0.3; margin: 0 4px;">|</span>
+                        <span id="text-dept" class="dept-badge">Technical Dept.</span>
+                    </div>
+                    <div class="user-info-row">
+                        <i data-lucide="mail" style="width: 12px; height: 12px;"></i> 
+                        <span class="email-link" onclick="copyEmail(event, 'phuc_le.thai@corsairmarine.com')">phuc_le.thai@corsairmarine.com</span>
+                    </div>
+                    <!-- THÊM NÚT GỬI PHẢN HỒI -->
+                    <div class="user-info-row mt-1">
+                        <button onclick="openFeedbackModal()" class="flex items-center gap-1.5 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm transition-all border border-cyan-300">
+                            <i data-lucide="message-square-plus" style="width: 12px; height: 12px;"></i>
+                            <span id="text-btn-feedback">Gửi Phản Hồi</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="lang-switch">
+                    <button class="lang-btn active" onclick="setLanguage('vi')">VI</button>
+                    <button class="lang-btn" onclick="setLanguage('en')">EN</button>
+                </div>
+            </div>
+        </header>
+
+        <div class="middle-content-wrapper">
+            
+            <!-- Main Hero -->
+            <main class="hero-section">
+                <div class="subtitle-wrapper">
+                    <div class="subtitle-line" style="background: linear-gradient(to right, transparent, var(--cyan-500));"></div>
+                    <h2 class="subtitle" id="text-subtitle">Trải nghiệm Hàng hải Tích hợp AI</h2>
+                    <div class="subtitle-line" style="background: linear-gradient(to left, transparent, var(--cyan-500));"></div>
+                </div>
+                <h1 class="title">
+                    <span id="text-title-1">Chế tạo cho Thủy thủ Thực thụ.</span><br />
+                    <span class="title-gradient" id="text-title-2">Tiếp sức mạnh bởi Trí tuệ Nhân tạo.</span>
+                </h1>
+                <p class="desc" id="text-desc">
+                    Một nền tảng thông minh kết nối con người, kiến thức và vận hành trong mọi trải nghiệm cùng Seawind.
+                </p>
+            </main>
+
+            <!-- Portals Interactive Section -->
+            <section class="portals-section">
+                <div class="section-header">
+                    <div class="dot-indicator"></div>
+                    <h3 class="section-title" id="text-choose-portal">Chọn Cổng Thông Tin</h3>
+                    <div class="dot-indicator"></div>
+                </div>
+                
+                <div class="cards-container" id="portals-container">
+                    
+                    <!-- CON TÀU CHẠY BÊN NGOÀI ĐÃ ĐƯỢC PHỤC HỒI LẠI (BOAT 2D) -->
+                    <div class="global-ship-wrapper" id="global-ship">
+                        <div class="boat-2d-container" id="ship-model" data-scale="1" style="width: 120px;">
+                            <div class="boat-bobbing">
+                                <div class="b-wake"></div>
+                                <div class="b-rudder"></div>
+                                <div class="b-saildrive"></div>
+                                <div class="b-keel"></div>
+                                
+                                <div class="b-hull">
+                                    <div class="b-windows"></div>
+                                </div>
+                                
+                                <div class="b-bimini"></div>
+                                <div class="b-cabin"></div>
+                                
+                                <div class="b-mast"></div>
+                                <div class="b-mainsail"></div>
+                                <div class="b-jib"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Nơi các card sẽ được sinh ra từ Javascript -->
+                </div>
+            </section>
+            
+        </div>
+
+        <!-- Footer -->
+        <footer>
+            <div class="quote-container">
+                <span class="quote-mark">"</span>
+                <p class="quote-text">
+                    <span id="text-quote-1">Thiết kế bởi thủy thủ.</span><br />
+                    <span id="text-quote-2">Chế tạo chuẩn xác.</span><br />
+                    <span class="quote-highlight" id="text-quote-3">Vận hành bằng trí tuệ.</span>
+                </p>
+            </div>
+            
+            <div class="footer-features" id="footer-features-container">
+                <!-- Javascript sẽ tự động sinh HTML kèm bảng chọn Mạng xã hội vào đây -->
+            </div>
+        </footer>
+    </div>    
+
+    <!-- MAP MODAL -->
+    <div class="custom-modal-overlay" id="map-modal" onclick="if(event.target === this) closeMapModal()">
+        <div class="custom-modal-box">
+            <button class="close-map-btn" onclick="closeMapModal()">
+                <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+            </button>
+            
+            <!-- HEADER CỦA BẢN ĐỒ -->
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 15px; width: 100%; padding-right: 40px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i data-lucide="map-pin" style="color: var(--cyan-400);"></i>
+                    <div>
+                        <h3 class="modal-title" id="map-modal-title" style="margin-bottom: 0; text-align: left; font-size: 1.1rem;">Seawind / Corsair Marine Vietnam</h3>
+                        <p class="modal-desc" id="map-modal-desc" style="margin-bottom: 0; text-align: left; font-size: 0.8rem;">Cơ sở sản xuất & lắp ráp</p>
+                    </div>
+                </div>
+                
+                <!-- NÚT GẠT CHỌN VỊ TRÍ -->
+                <div class="location-switch">
+                    <button class="loc-btn active" id="btn-loc-vn" onclick="changeMapLocation('vn')">Việt Nam</button>
+                    <button class="loc-btn" id="btn-loc-tr" onclick="changeMapLocation('tr')">Türkiye</button>
+                </div>
+            </div>
+
+            <!-- BỌC MAP VÀ MÁY BAY VÀO CHUNG 1 KHUNG -->
+            <div style="position: relative; flex-grow: 1; width: 100%; margin-top: 1rem; border-radius: 1rem; overflow: hidden; border: 1px solid var(--cyan-800);">
+                <div id="map-container" style="width: 100%; height: 100%; background: #000;"></div>
+                
+                <!-- MÁY BAY THEO DÕI CAMERA (TRACKING PLANE DÀNH RIÊNG CHO BẢN ĐỒ) -->
+                <div id="tracking-plane">
+                    <div class="plane-2d-container" id="map-plane-model">
+                        <div class="plane-bobbing">
+                            <!-- Icon chuẩn xác xoay mũi ngang sang Phải -->
+                            <i data-lucide="plane" class="vehicle-icon"></i>
+                            <div class="vehicle-trail"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- DEALER MODAL (TÌM ĐẠI LÝ) -->
+    <div class="custom-modal-overlay" id="dealer-modal" onclick="if(event.target === this) closeDealerModal()">
+        <div class="custom-modal-box" style="max-width: 1000px; height: 85vh; display: flex; flex-direction: column; padding: 1.5rem; background: rgba(2, 8, 19, 0.95);">
+            <button class="close-map-btn" onclick="closeDealerModal()">
+                <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+            </button>
+            
+            <!-- HEADER CỦA CỬA SỔ -->
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                <i data-lucide="compass" style="color: var(--cyan-400);"></i>
+                <h3 class="modal-title" id="text-dealer-title" style="margin-bottom: 0; text-align: left; font-size: 1.1rem;">Tìm Đại Lý</h3>
+            </div>
+
+            <!-- KHUNG NHÚNG TRANG WEB GỐC (IFRAME) -->
+            <div style="position: relative; flex-grow: 1; width: 100%; border-radius: 1rem; overflow: hidden; border: 1px solid var(--cyan-800); background: #fff;">
+                <iframe src="https://seawindcats.com/find-a-dealer/" style="width: 100%; height: 100%; border: none;" title="Find a Dealer"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGIN MODAL -->
+    <div class="custom-modal-overlay" id="login-modal" onclick="if(event.target === this) closeLoginModal()">
+        <div class="custom-modal-box">
+            <div class="modal-icon-wrapper">
+                <i data-lucide="lock" style="width: 2rem; height: 2rem;"></i>
+            </div>
+            <h3 class="modal-title" id="modal-title-text">Yêu Cầu Đăng Nhập</h3>
+            <p class="modal-desc" id="modal-desc-text">Cổng Dịch Vụ Khách Hàng chứa dữ liệu bảo mật. Vui lòng đăng nhập bằng tài khoản Seawind để tiếp tục.</p>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeLoginModal()" id="modal-btn-cancel">Hủy</button>
+                <button class="btn-primary" onclick="redirectToLogin()" id="modal-btn-login">Đăng Nhập</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FEEDBACK MODAL -->
+    <div class="custom-modal-overlay" id="feedback-modal" onclick="if(event.target === this) closeFeedbackModal()">
+        <div class="custom-modal-box" style="max-width: 450px; background: rgba(2, 8, 19, 0.95); text-align: left; padding: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-light); padding-bottom: 1rem; margin-bottom: 1rem;">
+                <h3 class="modal-title" style="margin-bottom: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 8px; color: var(--cyan-400);">
+                    <i data-lucide="send" style="width: 20px; height: 20px;"></i>
+                    <span id="text-fb-title">Gửi Yêu Cầu & Phản Hồi</span>
+                </h3>
+                <button onclick="closeFeedbackModal()" style="background: transparent; border: none; color: var(--text-gray-400); cursor: pointer;"><i data-lucide="x" style="width: 20px; height: 20px;"></i></button>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <div>
+                    <label id="text-fb-type" style="display: block; font-size: 0.75rem; color: var(--text-gray-300); margin-bottom: 0.5rem; font-weight: 600;">Loại yêu cầu</label>
+                    <select id="feedbackType" style="width: 100%; padding: 0.6rem; border-radius: 0.5rem; border: 1px solid var(--border-light); background: rgba(255,255,255,0.05); color: white; outline: none; font-size: 0.875rem;">
+                        <option style="color: black;">Feedback (Góp ý)</option>
+                        <option style="color: black;">Report Issue (Báo cáo lỗi)</option>
+                        <option style="color: black;">Other (Khác)</option>
+                    </select>
+                </div>
+                <div>
+                    <label id="text-fb-email" style="display: block; font-size: 0.75rem; color: var(--text-gray-300); margin-bottom: 0.5rem; font-weight: 600;">Email của bạn</label>
+                    <input type="email" id="emailInput" placeholder="VD: name@corsairmarine.com" style="width: 100%; padding: 0.6rem; border-radius: 0.5rem; border: 1px solid var(--border-light); background: rgba(255,255,255,0.05); color: white; outline: none; font-size: 0.875rem;">
+                </div>
+                <div>
+                    <label id="text-fb-desc" style="display: block; font-size: 0.75rem; color: var(--text-gray-300); margin-bottom: 0.5rem; font-weight: 600;">Nội dung chi tiết</label>
+                    <textarea id="feedbackInput" placeholder="Mô tả chi tiết vấn đề của bạn..." style="width: 100%; padding: 0.6rem; border-radius: 0.5rem; border: 1px solid var(--border-light); background: rgba(255,255,255,0.05); color: white; outline: none; font-size: 0.875rem; height: 100px; resize: none;"></textarea>
+                </div>
+                
+                <button id="btn-submit-fb" onclick="submitFeedbackForm()" class="btn-primary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 0.5rem;">
+                    <i data-lucide="check-circle" style="width: 16px; height: 16px;"></i>
+                    <span id="text-fb-btn">Gửi Đi</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-msg" id="toast-msg">
+        <i data-lucide="check-circle" style="width: 16px; height: 16px;"></i>
+        <span id="toast-text">Đã copy email!</span>
+    </div>
+
+    <script>
+        const translations = {
+            en: {
+                subtitle: "AI-Powered Maritime Experience",
+                titleLine1: "Built for Real Sailors.",
+                titleLine2: "Powered by Intelligence.",
+                desc: "One intelligent platform connecting people, knowledge and operations across every Seawind experience.",
+                choosePortal: "Choose Your Portal",
+                enterPortal: "Enter Portal",
+                quote1: "Designed by sailors.",
+                quote2: "Built with precision.",
+                quote3: "Powered by intelligence.",
+                author: "Author: Le Thai Phuc",
+                department: "Technical Dept.",
+                about: "About Seawind",
+                modalTitle: "Authentication Required",
+                modalDesc: "Customer Service Portal contains secure data. Please login with your Seawind account to continue.",
+                modalCancel: "Cancel",
+                modalLogin: "Login Now",
+                toastCopy: "Email copied to clipboard!",
+                
+                globeHint: "View Location", 
+                compassHint: "Find Dealer",
+                dealerTitle: "Find a Dealer",
+                locBtn_vn: "Vietnam",
+                locBtn_tr: "Türkiye",
+                mapTitle_vn: "Seawind / Corsair Marine Vietnam",
+                mapDesc_vn: "Manufacturing & Assembly Facility",
+                mapPopup_vn: "<b style='color: #22d3ee;'>Seawind Vietnam</b><br>Manufacturing Facility",
+                mapTitle_tr: "Seawind Türkiye",
+                mapDesc_tr: "European Hub & Facility",
+                mapPopup_tr: "<b style='color: #22d3ee;'>Seawind Türkiye</b><br>European Facility",
+                
+                btnFeedback: "Submit Feedback",
+                fbTitle: "Submit Request & Feedback",
+                fbType: "Request Type",
+                fbEmail: "Your Email",
+                fbDesc: "Details",
+                fbBtnSubmit: "Send Now",
+
+                portals: [
+                    { id: 1, title: "Customer Service", desc: "Support, warranties, manuals, maintenance and more.", icon: "headphones", link: "https://gemini.google.com/share/a7014220a4e7", image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=800&auto=format&fit=crop" },
+                    { id: 2, title: "AI Knowledge Assistant\n(SOP / WI / TDS..)", desc: "Instant access to documents, procedures and technical data.", icon: "brain-circuit", link: "https://sopcorsair-dev.github.io/seawind-portal/", image: "https://i.postimg.cc/NfLsK71J/how-ai-can-cause-busin.jpg" },
+                    { id: 6, title: "Production Hub", desc: "Manufacturing processes, tracking, materials and output metrics.", icon: "factory", link: "https://gemini.google.com/share/1aa05fc3aa1a", image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=800&auto=format&fit=crop" },
+                    { id: 3, title: "HR", desc: "People, onboarding, training and policies.", icon: "users", link: "https://gemini.google.com/share/78e27fbcf50d", image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=800&auto=format&fit=crop" },
+                    { id: 4, title: "HSE", desc: "Health, safety, environment and incident reporting.", icon: "shield-plus", link: "https://gemini.google.com/share/2e66d703429f", image: "https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?q=80&w=800&auto=format&fit=crop" },
+                    { id: 5, title: "QC Hub", desc: "Inspections, defects, reports and quality control.", icon: "clipboard-check", link: "https://gemini.google.com/share/ac69abcb961a", image: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=800&auto=format&fit=crop" },
+                ],
+                footer: [
+                    { id: "community", icon: "globe", text: "Global\nCommunity" },
+                    { id: "secure", icon: "lock", text: "Secure\nPlatform" },
+                    { id: "lang", icon: "languages", text: "Multi-language\nSupport" },
+                    { id: "ai", icon: "network", text: "AI-Powered\nOperations" },
+                ]
+            },
+            vi: {
+                subtitle: "Trải nghiệm Hàng hải Tích hợp AI",
+                titleLine1: "Chế tạo cho Thủy thủ Thực thụ.",
+                titleLine2: "Tiếp sức mạnh bởi Trí tuệ Nhân tạo.",
+                desc: "Một nền tảng thông minh kết nối con người, kiến thức và vận hành trong mọi trải nghiệm cùng Seawind.",
+                choosePortal: "Chọn Cổng Thông Tin",
+                enterPortal: "Vào Cổng",
+                quote1: "Thiết kế bởi thủy thủ.",
+                quote2: "Chế tạo chuẩn xác.",
+                quote3: "Vận hành bằng trí tuệ.",
+                author: "Tác Giả: Lê Thái Phúc",
+                department: "Phòng Kỹ Thuật",
+                about: "Về Seawind",
+                modalTitle: "Yêu Cầu Đăng Nhập",
+                modalDesc: "Cổng Dịch Vụ Khách Hàng chứa dữ liệu bảo mật. Vui lòng đăng nhập bằng tài khoản Seawind để tiếp tục.",
+                modalCancel: "Hủy",
+                modalLogin: "Đăng Nhập",
+                toastCopy: "Đã sao chép email vào khay nhớ tạm!",
+                
+                globeHint: "Xem Vị Trí", 
+                compassHint: "Tìm Đại Lý",
+                dealerTitle: "Tìm Đại Lý",
+                locBtn_vn: "Việt Nam",
+                locBtn_tr: "Thổ Nhĩ Kỳ",
+                mapTitle_vn: "Seawind / Corsair Marine Vietnam",
+                mapDesc_vn: "Cơ sở sản xuất & lắp ráp",
+                mapPopup_vn: "<b style='color: #22d3ee;'>Seawind Việt Nam</b><br>Cơ sở sản xuất",
+                mapTitle_tr: "Seawind Türkiye",
+                mapDesc_tr: "Trụ sở & Cơ sở Châu Âu",
+                mapPopup_tr: "<b style='color: #22d3ee;'>Seawind Türkiye</b><br>Cơ sở Châu Âu",
+
+                btnFeedback: "Gửi Phản Hồi",
+                fbTitle: "Gửi Yêu Cầu & Phản Hồi",
+                fbType: "Loại yêu cầu",
+                fbEmail: "Email của bạn",
+                fbDesc: "Nội dung chi tiết",
+                fbBtnSubmit: "Gửi Đi",
+
+                portals: [
+                    { id: 1, title: "Dịch Vụ Khách Hàng", desc: "Hỗ trợ, bảo hành, tài liệu, bảo trì và hơn thế nữa.", icon: "headphones", link: "https://gemini.google.com/share/98b93f8e7e96", image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=800&auto=format&fit=crop" },
+                    { id: 2, title: "Trợ lý Kiến thức AI\n(SOP / WI / TDS..)", desc: "Truy cập tức thì vào tài liệu, quy trình và dữ liệu kỹ thuật.", icon: "brain-circuit", link: "https://sopcorsair-dev.github.io/seawind-portal", image: "https://i.postimg.cc/NfLsK71J/how-ai-can-cause-busin.jpg" },
+                    { id: 6, title: "Trung Tâm Sản Xuất", desc: "Quy trình chế tạo, theo dõi, vật liệu và số liệu đầu ra.", icon: "factory", link: "https://gemini.google.com/share/1aa05fc3aa1a", image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=800&auto=format&fit=crop" },
+                    { id: 3, title: "Nhân Sự (HR)", desc: "Con người, hội nhập, đào tạo và chính sách.", icon: "users", link: "https://gemini.google.com/share/78e27fbcf50d", image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=800&auto=format&fit=crop" },
+                    { id: 4, title: "An Toàn & Môi Trường (HSE)", desc: "Sức khỏe, an toàn, môi trường và báo cáo sự cố.", icon: "shield-plus", link: "https://gemini.google.com/share/2e66d703429f", image: "https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?q=80&w=800&auto=format&fit=crop" },
+                    { id: 5, title: "Kiểm Soát Chất Lượng", desc: "Thanh tra, lỗi, báo cáo và kiểm soát chất lượng.", icon: "clipboard-check", link: "https://gemini.google.com/share/ac69abcb961a", image: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=800&auto=format&fit=crop" },
+                ],
+                footer: [
+                    { id: "community", icon: "globe", text: "Cộng Đồng\nToàn Cầu" },
+                    { id: "secure", icon: "lock", text: "Nền Tảng\nBảo Mật" },
+                    { id: "lang", icon: "languages", text: "Hỗ Trợ\nĐa Ngôn Ngữ" },
+                    { id: "ai", icon: "network", text: "Vận Hành\nBằng AI" },
+                ]
+            }
+        };
+
+        let currentLang = 'vi';
+        let activeCardId = 2; // Khởi tạo với Portal AI
+        let shipLastX = 0;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderApp();
+            setTimeout(updateGlobalShipPosition, 200); 
+            window.addEventListener('resize', updateGlobalShipPosition);
+        });
+
+        // Ẩn Menu Mạng xã hội nếu người dùng click ra vùng khác
+        document.addEventListener('click', (e) => {
+            const menu = document.getElementById('social-menu');
+            const communityBtn = document.getElementById('btn-community');
+            if (menu && menu.classList.contains('show')) {
+                if (!menu.contains(e.target) && !communityBtn.contains(e.target)) {
+                    menu.classList.remove('show');
+                }
+            }
+        });
+
+        function setLanguage(lang) {
+            if (currentLang === lang) return;
+            currentLang = lang;
+            
+            const btns = document.querySelectorAll('.lang-btn');
+            btns.forEach(btn => {
+                if (btn.innerText.toLowerCase() === lang) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            renderApp();
+            setTimeout(updateGlobalShipPosition, 200);
+            updateMapTexts();
+        }
+
+        function renderApp() {
+            const t = translations[currentLang];
+
+            document.getElementById('text-author').innerText = t.author;
+            document.getElementById('text-dept').innerText = t.department;
+            document.getElementById('text-about').innerText = t.about;
+            document.getElementById('text-subtitle').innerText = t.subtitle;
+            document.getElementById('text-title-1').innerText = t.titleLine1;
+            document.getElementById('text-title-2').innerText = t.titleLine2;
+            document.getElementById('text-desc').innerText = t.desc;
+            document.getElementById('text-choose-portal').innerText = t.choosePortal;
+            document.getElementById('text-quote-1').innerText = t.quote1;
+            document.getElementById('text-quote-2').innerText = t.quote2;
+            document.getElementById('text-quote-3').innerText = t.quote3;
+            
+            document.getElementById('modal-title-text').innerText = t.modalTitle;
+            document.getElementById('modal-desc-text').innerText = t.modalDesc;
+            document.getElementById('modal-btn-cancel').innerText = t.modalCancel;
+            document.getElementById('modal-btn-login').innerText = t.modalLogin;
+            
+            document.getElementById('text-globe-hint').innerText = t.globeHint;
+            document.getElementById('text-compass-hint').innerText = t.compassHint;
+            document.getElementById('text-dealer-title').innerText = t.dealerTitle;
+
+            // Update UI text for Feedback modal
+            document.getElementById('text-btn-feedback').innerText = t.btnFeedback;
+            document.getElementById('text-fb-title').innerText = t.fbTitle;
+            document.getElementById('text-fb-type').innerText = t.fbType;
+            document.getElementById('text-fb-email').innerText = t.fbEmail;
+            document.getElementById('text-fb-desc').innerText = t.fbDesc;
+            document.getElementById('text-fb-btn').innerText = t.fbBtnSubmit;
+            
+            updateMapTexts();
+            renderPortals(t);
+            renderFooter(t);
+
+            lucide.createIcons();
+            attachCardEvents();
+        }
+
+        function renderPortals(t) {
+            const container = document.getElementById('portals-container');
+            const existingShip = document.getElementById('global-ship'); // Lấy lại con thuyền 2D
+            
+            container.innerHTML = ''; 
+            if(existingShip) container.appendChild(existingShip);
+
+            t.portals.forEach(portal => {
+                const isActive = activeCardId === portal.id;
+                const shortTitle = portal.title.split('\n')[0];
+
+                const cardHTML = `
+                    <div class="portal-card ${isActive ? 'active' : ''}" data-id="${portal.id}" data-link="${portal.link}">
+                        
+                        <!-- THÊM DÒNG NÀY: Gọi CSS và Link ảnh đã khai báo -->
+                        <div class="card-bg-image" style="background-image: url('${portal.image}')"></div>
+                        
+                        <div class="card-bg-overlay"></div>
+                        
+                        <div class="card-inactive-content">
+                            <div class="icon-circle sm">
+                                <i data-lucide="${portal.icon}" class="icon-inactive"></i>
+                            </div>
+                            <span class="title-mobile">${shortTitle}</span>
+                            <span class="title-desktop">${shortTitle}</span>
+                        </div>
+                        
+                        <div class="card-active-content">
+                            <div class="icon-circle lg">
+                                <i data-lucide="${portal.icon}" class="icon-active"></i>
+                            </div>
+                            <div class="content-bottom">
+                                <h4>${portal.title}</h4>
+                                <p>${portal.desc}</p>
+                                <a class="portal-link" onclick="handlePortalClick(event, ${portal.id}, '${portal.link}')">
+                                    ${t.enterPortal}
+                                    <i data-lucide="arrow-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', cardHTML);
+            });
+        }
+
+        function renderFooter(t) {
+            const container = document.getElementById('footer-features-container');
+            container.innerHTML = t.footer.map(item => {
+                // Nhận diện mục "Cộng đồng" để gắn tính năng click trổ Menu Mạng xã hội
+                if (item.id === 'community') {
+                    return `
+                        <div class="feature-item" id="btn-community" style="position: relative; cursor: pointer;">
+                            <div class="feature-icon-wrapper">
+                                <i data-lucide="${item.icon}" class="feature-icon" stroke-width="1.5"></i>
+                            </div>
+                            <span class="feature-text">${item.text}</span>                            
+                            
+                            <!-- BẢNG DROPDOWN NỀN TẢNG (SỬ DỤNG DIRECT SVG ĐỂ HIỂN THỊ 100%) -->
+                            <div class="social-dropdown" id="social-menu">
+                                <a href="https://www.facebook.com/SeawindCatamarans/" target="_blank" class="social-link" onclick="event.stopPropagation()">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="rgba(24, 119, 242, 0.15)" stroke="#1877F2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                                    Facebook
+                                </a>
+                                <a href="https://www.instagram.com/seawindcats/" target="_blank" class="social-link" onclick="event.stopPropagation()">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="rgba(228, 64, 95, 0.15)" stroke="#E4405F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                                    Instagram
+                                </a>
+                                <a href="https://vn.linkedin.com/company/seawindcatamarans" target="_blank" class="social-link" onclick="event.stopPropagation()">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="rgba(10, 102, 194, 0.15)" stroke="#0A66C2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+                                    LinkedIn
+                                </a>
+                                <a href="https://www.youtube.com/user/SeawindCatamarans" target="_blank" class="social-link" onclick="event.stopPropagation()">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="rgba(255, 0, 0, 0.15)" stroke="#FF0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33 2.78 2.78 0 0 0 1.94 2c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.33 29 29 0 0 0-.46-5.33z"></path><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon></svg>
+                                    YouTube
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                return `
+                    <div class="feature-item">
+                        <div class="feature-icon-wrapper">
+                            <i data-lucide="${item.icon}" class="feature-icon" stroke-width="1.5"></i>
+                        </div>
+                        <span class="feature-text">${item.text}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleSocialMenu(e) {
+            e.stopPropagation(); 
+            const menu = document.getElementById('social-menu');
+            if (menu) {
+                menu.classList.toggle('show');
+            }
+        }
+
+        function handlePortalClick(event, portalId, link) {
+            event.preventDefault();
+            event.stopPropagation();
+            window.open(link, '_blank'); 
+        }
+
+        function copyEmail(event, email) {
+            event.preventDefault();
+            const tempInput = document.createElement("input");
+            tempInput.value = email;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand("copy");
+            document.body.removeChild(tempInput);
+
+            const toast = document.getElementById('toast-msg');
+            document.getElementById('toast-text').innerText = translations[currentLang].toastCopy;
+            toast.classList.add('show');
+            
+            setTimeout(() => { toast.classList.remove('show'); }, 3000);
+            setTimeout(() => { window.location.href = "mailto:" + email; }, 500);
+        }
+
+        function attachCardEvents() {
+            const cards = document.querySelectorAll('.portal-card');
+            cards.forEach(card => {
+                card.addEventListener('mousemove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = ((e.clientX - rect.left) / rect.width) * 100;
+                    const y = ((e.clientY - rect.top) / rect.height) * 100;
+                    card.style.setProperty('--x', `${x}%`);
+                    card.style.setProperty('--y', `${y}%`);
+                });
+
+                const handleActivate = () => {
+                    const id = parseInt(card.getAttribute('data-id'));
+                    if (activeCardId !== id) {
+                        activeCardId = id;
+                        updateActiveCardClasses();
+                    }
+                };
+
+                card.addEventListener('mouseenter', handleActivate);
+                
+                card.addEventListener('click', (e) => {
+                    if (e.target.closest('.portal-link')) return;
+
+                    const id = parseInt(card.getAttribute('data-id'));
+                    if (activeCardId !== id) {
+                        activeCardId = id;
+                        updateActiveCardClasses();
+                    } else {
+                        const link = card.getAttribute('data-link');
+                        if (link) window.open(link, '_blank');
+                    }
+                });
+            });
+        }
+
+        function updateActiveCardClasses() {
+            const cards = document.querySelectorAll('.portal-card');
+            cards.forEach(card => {
+                const id = parseInt(card.getAttribute('data-id'));
+                if (id === activeCardId) {
+                    card.classList.add('active');
+                } else {
+                    card.classList.remove('active');
+                }
+            });
+            updateGlobalShipPosition();
+        }
+
+        // HÀM ĐIỀU HƯỚNG CON TÀU (BOAT) BÊN NGOÀI
+        function updateGlobalShipPosition() {
+            const shipWrapper = document.getElementById('global-ship');
+            const shipModel = document.getElementById('ship-model');
+            const activeCard = document.querySelector('.portal-card.active');
+            const container = document.getElementById('portals-container');
+
+            if (!shipWrapper || !shipModel || !activeCard || !container) return;
+
+            const cardLeft = activeCard.offsetLeft;
+            const cardTop = activeCard.offsetTop;
+            const cardWidth = activeCard.offsetWidth;
+
+            const isDesktop = window.innerWidth >= 1024;
+            
+            const targetX = cardLeft + (cardWidth / 2);
+            const targetY = isDesktop ? 0 : cardTop; 
+
+            const diffX = targetX - shipLastX;
+            let currentScaleX = parseFloat(shipModel.getAttribute('data-scale')) || 1;
+            
+            if (diffX < -5) {
+                currentScaleX = -1;
+            } else if (diffX > 5) {
+                currentScaleX = 1;
+            }
+
+            shipLastX = targetX;
+            shipModel.setAttribute('data-scale', currentScaleX);
+
+            shipWrapper.style.transform = `translate(${targetX}px, ${targetY}px)`;
+            
+            const baseScale = isDesktop ? 1 : 0.8;
+            shipModel.style.transform = `scaleX(${currentScaleX * baseScale}) scaleY(${baseScale})`;
+        }
+
+        // ==========================================================================
+        // XỬ LÝ GỬI PHẢN HỒI (FEEDBACK & REPORT)
+        // ==========================================================================
+        function openFeedbackModal() {
+            document.getElementById('feedback-modal').classList.add('show');
+            lucide.createIcons();
+        }
+
+        function closeFeedbackModal() {
+            document.getElementById('feedback-modal').classList.remove('show');
+        }
+
+        function submitFeedbackForm() {
+            const emailInput = document.getElementById('emailInput');
+            const typeInput = document.getElementById('feedbackType');
+            const feedbackInput = document.getElementById('feedbackInput');
+
+            const userEmail = emailInput.value.trim();
+            const userType = typeInput.options[typeInput.selectedIndex].text;
+            const userMessage = feedbackInput.value.trim();
+
+            if (!userEmail) { alert('Vui lòng nhập Email của bạn!'); emailInput.focus(); return; }
+            
+            // --- THÊM MỚI: KIỂM TRA ĐỊNH DẠNG EMAIL CHỐNG SPAM ---
+            const emailLower = userEmail.toLowerCase();
+            if (!emailLower.endsWith('@corsairmarine.com') && !emailLower.endsWith('@gmail.com')) {
+                alert('Để tránh spam, vui lòng sử dụng email đuôi @corsairmarine.com hoặc @gmail.com');
+                emailInput.focus();
+                return;
+            }
+
+            if (!userMessage) { alert('Vui lòng nhập nội dung chi tiết!'); feedbackInput.focus(); return; }
+
+            // Đổi giao diện nút thành Loading
+            const btnSubmit = document.getElementById('btn-submit-fb');
+            const originHtml = btnSubmit.innerHTML;
+            btnSubmit.innerHTML = `<i data-lucide="loader-2" class="animate-spin" style="width: 16px; height: 16px;"></i> Đang gửi...`;
+            btnSubmit.disabled = true;
+            lucide.createIcons();
+
+            // Cấu hình API và Token
+            const sheetdbAPI = 'https://sheetdb.io/api/v1/g2hoo34628est?sheet=Feedback'; 
+            const telegramBotToken = "8749329642:AAHNQ5V8QyMeZLrz8yTmGyAsMXAzZ-95LI4"; 
+            const telegramChatId = "5209672702"; 
+            
+            const now = new Date();
+            const timestamp = `${("0"+now.getDate()).slice(-2)}/${("0"+(now.getMonth()+1)).slice(-2)}/${now.getFullYear()} ${("0"+now.getHours()).slice(-2)}:${("0"+now.getMinutes()).slice(-2)}`;
+
+            // 1. Lưu vào SheetDB
+            fetch(sheetdbAPI, {
+                method: 'POST',
+                headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    data: [{ "NguoiGui": userEmail, "LoaiYeuCau": userType, "NoiDung": userMessage, "ThoiGian": timestamp }]
+                })
+            }).then(() => {
+                // 2. Gửi qua Telegram
+                const safeMessage = userMessage.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                const teleText = `<b>💬 LANDING PAGE FEEDBACK</b>\n\n` +
+                                 `🕒 <b>Time:</b> ${timestamp}\n` +
+                                 `🎯 <b>Type:</b> ${userType}\n` +
+                                 `📧 <b>Email:</b> ${userEmail}\n\n` +
+                                 `📝 <b>Details:</b> <i>${safeMessage}</i>`;
+
+                fetch(`https://api.telegram.org/bot${telegramBotToken}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: telegramChatId, text: teleText, parse_mode: 'HTML' })
+                });
+
+                // 3. --- THÊM MỚI: TỰ ĐỘNG MỞ TRÌNH GỬI EMAIL ---
+                // Hệ thống tự mở ứng dụng Mail của máy tính/điện thoại, soạn sẵn chủ đề và nội dung để người dùng ấn Gửi đi.
+                const subject = encodeURIComponent(`[Seawind Portal] Phản hồi/Yêu cầu: ${userType}`);
+                const body = encodeURIComponent(`Loại yêu cầu: ${userType}\nEmail người gửi: ${userEmail}\nNội dung chi tiết:\n${userMessage}`);
+                window.location.href = `mailto:phuc_le.thai@corsairmarine.com?subject=${subject}&body=${body}`;
+
+                // Thành công
+                setTimeout(() => {
+                    alert('Đã gửi phản hồi thành công! Cảm ơn bạn.');
+                    emailInput.value = ''; feedbackInput.value = '';
+                    closeFeedbackModal();
+                    btnSubmit.innerHTML = originHtml;
+                    btnSubmit.disabled = false;
+                    lucide.createIcons();
+                }, 500);
+            }).catch(() => {
+                alert('Có lỗi mạng. Không thể gửi ngay lúc này!');
+                btnSubmit.innerHTML = originHtml; btnSubmit.disabled = false; lucide.createIcons();
+            });
+        }
+
+        // ==========================================================================
+        // XỬ LÝ BẢN ĐỒ VÀ MÁY BAY AVIATION (MAP TRACKING) 
+        // ==========================================================================
+        let leafletMap = null;
+        let mapMarker = null; 
+        let currentMapLoc = 'vn'; 
+        let flightRouteLine = null; // Tuyến đường bay đứt nét
+
+        // Kho dữ liệu tọa độ các chi nhánh
+        const mapCoordinates = {
+            vn: [10.75847472996557, 106.78394416651932],
+            tr: [38.61447699412008, 26.927380498505247] 
+        };
+
+        function updateMapTexts() {
+            const t = translations[currentLang];
+            
+            document.getElementById('map-modal-title').innerText = t[`mapTitle_${currentMapLoc}`];
+            document.getElementById('map-modal-desc').innerText = t[`mapDesc_${currentMapLoc}`];
+            document.getElementById('btn-loc-vn').innerText = t.locBtn_vn;
+            document.getElementById('btn-loc-tr').innerText = t.locBtn_tr;
+            
+            if (mapMarker) {
+                mapMarker.bindPopup(t[`mapPopup_${currentMapLoc}`]);
+            }
+        }
+
+        function changeMapLocation(locId) {
+            if (currentMapLoc === locId) return; 
+            const oldLoc = currentMapLoc;
+            currentMapLoc = locId;
+
+            document.getElementById('btn-loc-vn').classList.toggle('active', locId === 'vn');
+            document.getElementById('btn-loc-tr').classList.toggle('active', locId === 'tr');
+            updateMapTexts();
+
+            if (leafletMap && mapMarker) {
+                const startCoords = mapCoordinates[oldLoc];
+                const targetCoords = mapCoordinates[locId];
+
+                // 1. Vẽ tuyến đường bay
+                if (flightRouteLine) leafletMap.removeLayer(flightRouteLine);
+                flightRouteLine = L.polyline([startCoords, targetCoords], {
+                    color: '#22d3ee',
+                    weight: 2,
+                    dashArray: '10, 15', 
+                    className: 'aviation-route' 
+                }).addTo(leafletMap);
+
+                // 2. Ẩn điểm ghim đỏ tại bến cũ
+                mapMarker.closePopup();
+                mapMarker.setOpacity(0);
+
+                // 3. Xoay góc máy bay chuẩn xác dọc theo hướng di chuyển
+                const tracker = document.getElementById('tracking-plane');
+                const planeModel = document.getElementById('map-plane-model');
+                tracker.style.display = 'block';
+                tracker.style.opacity = '1';
+
+                const isMovingWest = targetCoords[1] < startCoords[1];
+                
+                // Mặc định CSS đã bẻ mũi máy bay chĩa sang Phải.
+                if (isMovingWest) {
+                    // Bay VN -> TR. Lật lại sang trái và chúi mũi hướng 20 độ theo đúng bản đồ
+                    planeModel.style.transform = `scale(1.2) scaleX(-1) rotate(20deg)`;
+                } else {
+                    // Bay TR -> VN. Mũi nằm bên Phải và chúi xuống 20 độ
+                    planeModel.style.transform = `scale(1.2) rotate(20deg)`;
+                }
+
+                // 4. Kích hoạt camera bản đồ bay
+                leafletMap.flyTo(targetCoords, 18, { animate: true, duration: 3.5 });
+
+                // 5. Kết thúc hành trình bay
+                setTimeout(() => {
+                    tracker.style.opacity = '0';
+                    setTimeout(() => { tracker.style.display = 'none'; }, 500);
+
+                    mapMarker.setLatLng(targetCoords);
+                    mapMarker.setOpacity(1); 
+                    mapMarker.bindPopup(translations[currentLang][`mapPopup_${locId}`]).openPopup();
+                    
+                    if (flightRouteLine) {
+                        flightRouteLine.setStyle({ opacity: 0.2, dashArray: 'none' });
+                    }
+                }, 3500);
+            }
+        }
+
+        function openMapModal() {
+            const modal = document.getElementById('map-modal');
+            modal.classList.add('show');
+
+            const currentCoords = mapCoordinates[currentMapLoc]; 
+
+            if (!leafletMap) {
+                leafletMap = L.map('map-container', { zoomControl: false }).setView([0, 0], 2); 
+
+                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                    attribution: '&copy; Esri'
+                }).addTo(leafletMap);
+
+                const popupText = translations[currentLang][`mapPopup_${currentMapLoc}`];
+                mapMarker = L.marker(currentCoords).addTo(leafletMap);
+                mapMarker.bindPopup(popupText).openPopup();
+                
+                lucide.createIcons();
+            } else {
+                leafletMap.setView([0, 0], 2);
+            }
+
+            setTimeout(() => {
+                leafletMap.invalidateSize(); 
+                leafletMap.flyTo(currentCoords, 18, { animate: true, duration: 3.5 });
+            }, 400); 
+        }
+
+        function closeMapModal() {
+            document.getElementById('map-modal').classList.remove('show');
+            setTimeout(() => {
+                if(leafletMap) leafletMap.setView([0, 0], 2);
+            }, 1000);
+        }
+        
+        // ==========================================================================
+        // XỬ LÝ DEALER MODAL (TÌM ĐẠI LÝ)
+        // ==========================================================================
+        function openDealerModal() {
+            document.getElementById('dealer-modal').classList.add('show');
+            lucide.createIcons();
+        }
+
+        function closeDealerModal() {
+            document.getElementById('dealer-modal').classList.remove('show');
+        }
+    </script>
+</body>
+</html>
